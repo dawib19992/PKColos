@@ -1,1 +1,41 @@
 
+Dla klasy Zbior z plików zbior.h i zbior.cpp:
+1) Napisz konstruktor kopiujący i przenoszący operator =, tak by działały zgodnie z koncepcją kopii głębokiej.
+2) Zdefiniuj klasę, która będzie kompozytem dowolnej liczby zbiorów. Zdefiniuj dla niej metodę dodającą instancję do
+kompozytu i usuwającą instancje z kompozytu. Rozwiązując to polecenie nie posługuj się ręcznym zarządzaniem pamięcią
+dynamiczną (new/delete).
+3) Napisz 2 testy jednostkowe sprawdzające czy:
+- oryginał i kopia mają prawidłowo rozdzielone zasoby przy użyciu konstruktora kopiującego,
+- biorca ma prawidłowo przypisany zasób po użyciu przenoszącego operatora =.
+4) Zdefiniuj funktor, pełniący rolę predykatu orzekającego o tym czy przekazany mu Zbiór ma prawidłowo przypisany zasób.
+5) Użyj funktora z polecenia 4 do napisania fragmentu kodu, który sprawdzi, ile instancji Zbioru w kompozycie ma prawidłowo
+przypisany zasób. Stwórz taką sytuację, aby kompozyt zawierał m. in. instancje o nieprzepisanym zasobie.
+UWAGA, jeśli okaże się, że do wykonania tego polecenia niezbędne jest zdefiniowanie dodatkowych funkcjonalności nie
+wymienionych w poleceniu to należy to zrobić. Należy koniecznie uzasadnić w komentarzu powód
+
+#include "zbior.h"
+#include <new>
+#include <random>
+#include <cassert>
+
+void Zbior::alokuj(int n)
+{
+	assert(n > 0);
+	m_elementy = new(std::nothrow) double[n]{};
+	m_liczbaElementow = n;
+
+}
+
+void Zbior::zwolnij()
+{
+	delete[] m_elementy;
+}
+
+Zbior::Zbior(size_t liczElem, double dGran, double gGran)
+{
+	alokuj(liczElem);
+	std::uniform_real_distribution<double> zakres(dGran, gGran);
+	std::random_device generator;
+	for (int elem = 0; elem < liczElem; elem++)
+		m_elementy[elem] = zakres(generator);
+}
