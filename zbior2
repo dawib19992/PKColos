@@ -1,0 +1,97 @@
+#include "zbior.h"
+#include <cassert>
+#include <random>
+#include <algorithm>
+
+void Zbior::alokuj(size_t n) {
+    assert(n > 0);
+    m_elementy = new double[n] {};
+    m_liczbaElementow = n;
+}
+
+void Zbior::zwolnij() {
+    delete[] m_elementy;
+    m_elementy = nullptr;
+    m_liczbaElementow = 0;
+}
+
+Zbior::Zbior(size_t liczElem, double dGran, double gGran)
+    : m_liczbaElementow(liczElem), m_dolnaGranica(dGran), m_gornaGranica(gGran) {
+    if (liczElem == 0) {
+        throw std::invalid_argument("Liczba elementów musi być większa od 0.");
+    }
+    alokuj(liczElem);
+    std::uniform_real_distribution<double> zakres(dGran, gGran);
+    std::random_device generator;
+    for (size_t i = 0; i < liczElem; ++i) {
+        m_elementy[i] = zakres(generator);
+    }
+}
+
+Zbior::Zbior(const Zbior& inny)
+    : m_liczbaElementow(inny.m_liczbaElementow),
+    m_dolnaGranica(inny.m_dolnaGranica),
+    m_gornaGranica(inny.m_gornaGranica) {
+    if (inny.m_elementy) {
+        alokuj(inny.m_liczbaElementow);
+        std::copy(inny.m_elementy, inny.m_elementy + m_liczbaElementow, m_elementy);
+    }
+}
+
+Zbior::Zbior(Zbior&& inny) noexcept
+    : m_liczbaElementow(inny.m_liczbaElementow),
+    m_elementy(inny.m_elementy),
+    m_dolnaGranica(inny.m_dolnaGranica),
+    m_gornaGranica(inny.m_gornaGranica) {
+    inny.m_elementy = nullptr;
+    inny.m_liczbaElementow = 0;
+}
+
+Zbior& Zbior::operator=(const Zbior& inny) {
+    if (this == &inny) return *this;
+    zwolnij();
+    m_dolnaGranica = inny.m_dolnaGranica;
+    m_gornaGranica = inny.m_gornaGranica;
+    alokuj(inny.m_liczbaElementow);
+    std::copy(inny.m_elementy, inny.m_elementy + m_liczbaElementow, m_elementy);
+    return *this;
+}
+
+Zbior& Zbior::operator=(Zbior&& inny) noexcept {
+    if (this == &inny) return *this;
+    zwolnij();
+    m_elementy = inny.m_elementy;
+    m_liczbaElementow = inny.m_liczbaElementow;
+    m_dolnaGranica = inny.m_dolnaGranica;
+    m_gornaGranica = inny.m_gornaGranica;
+    inny.m_elementy = nullptr;
+    inny.m_liczbaElementow = 0;
+    return *this;
+}
+
+Zbior::~Zbior() { zwolnij(); }
+
+size_t Zbior::liczbaElementow() const { return m_liczbaElementow; }
+const double* Zbior::elementy() const { return m_elementy; }
+
+void KompozytZbiorow::dodajZbior(Zbior zbior) {
+    zbiory.push_back(std::move(zbior));
+}
+
+void KompozytZbiorow::usunZbior(size_t indeks) {
+    assert(indeks < zbiory.size());
+    zbiory.erase(zbiory.begin() + indeks);
+}
+
+size_t KompozytZbiorow::liczbaZbiorow() const {
+    return zbiory.size();
+}
+
+const Zbior& KompozytZbiorow::pobierzZbior(size_t indeks) const {
+    assert(indeks < zbiory.size());
+    return zbiory[indeks];
+}
+
+bool CzyZasobPoprawny::operator()(const Zbior& zbior) const {
+    return zbior.elementy() != nullptr && zbior.liczbaElementow() > 0;
+}
